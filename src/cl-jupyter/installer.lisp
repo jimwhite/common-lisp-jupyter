@@ -56,7 +56,7 @@
 
 
 (defmethod jupyter:command-line ((instance system-installer))
-  "Get the command line for a user installation."
+  "Get the command line for a system installation."
   (let ((implementation (jupyter:installer-implementation instance)))
     (append (list (or implementation
                       (first (uiop:raw-command-line-arguments))
