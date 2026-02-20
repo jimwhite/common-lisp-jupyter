@@ -27,14 +27,16 @@
 		                                  "status" status)))))
 
 
-(defun send-execute-reply-ok (execution-count payload &aux (shell (kernel-shell *kernel*)))
+(defun send-execute-reply-ok (execution-count payload &key metadata
+                              &aux (shell (kernel-shell *kernel*)))
   (message-send shell
                 (make-message (channel-session shell) "execute_reply"
                               (list :object-plist
                                     "status" "ok"
                                     "execution_count" execution-count
                                     "user_expressions" :empty-object
-                                    "payload" payload))))
+                                    "payload" payload)
+                              :metadata metadata)))
 
 
 (defun send-execute-reply-error (execution-count ename evalue &optional traceback &aux (shell (kernel-shell *kernel*)))

@@ -286,6 +286,14 @@
     (finish-output *stdout*)
     (finish-output *stderr*)))
 
+(defgeneric execute-reply-metadata (kernel)
+  (:documentation "Return metadata plist for the execute_reply message, or NIL.
+  Called after evaluate-code completes successfully.  Subclasses can specialize
+  this to attach per-cell metadata (e.g. world events, dependencies).")
+  (:method (kernel)
+    (declare (ignore kernel))
+    nil))
+
 (defgeneric evaluate-form (kernel stream source-path breakpoints &optional line column))
 
 
@@ -1470,7 +1478,8 @@
                 (set-next-input (dequeue input-queue)))
               (unless (zerop (length p))
                 (page (text p)))
-              (send-execute-reply-ok execution-count *payload*))))))))
+              (send-execute-reply-ok execution-count *payload*
+                :metadata (execute-reply-metadata *kernel*)))))))))
 
 #|
 

@@ -102,6 +102,7 @@
 	         #:enqueue-input
 	         #:evaluate-code
 	         #:evaluate-form
+	         #:execute-reply-metadata
 	         #:get-comm
 	         #:inform
 	         #:inspect-code
