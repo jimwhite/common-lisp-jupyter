@@ -749,7 +749,10 @@
     (setf sink (make-instance 'sink
                               :path (uiop:xdg-runtime-dir
                               (make-pathname :directory '(:relative "common-lisp-jupyter")
-                                             :name (pathname-name connection-file)
+                                             :name (let ((prefix (uiop:getenv "JUPYTER_LOG_NAME")))
+                                                     (if prefix
+                                                       (format nil "~a-~a" prefix (pathname-name connection-file))
+                                                       (pathname-name connection-file)))
                                              :type "log"))))
     (start sink)
     (inform :info k "Starting ~A kernel" name)
