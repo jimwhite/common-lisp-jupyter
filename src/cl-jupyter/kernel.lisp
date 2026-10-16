@@ -569,6 +569,30 @@
 
 
 
+;;; SBCL 2.6.9 removed SB-IMPL::MAKE-EVAL-LAMBDA: the lambda-wrapping logic now
+;;; lives inside SB-C::%COMPILE-IN-LEXENV, reached through the new
+;;; SB-C:EVAL-WITH-COMPILE-IN-LEXENV.  We cannot use that entry point here,
+;;; because it evaluates the form immediately, whereas we must compile first and
+;;; only call the resulting function after re-activating breakpoints.  So keep a
+;;; private copy of the old wrapper, which also works on earlier SBCL versions.
+#+sbcl
+(defun make-eval-lambda (form)
+  "Wrap FORM so that it can be compiled by SB-C:COMPILE-IN-LEXENV.
+Returns (VALUES LAMBDA-FORM CALL-P), where CALL-P is true when LAMBDA-FORM must
+be called to evaluate FORM, and NIL when FORM is already a lambda expression."
+  (let ((lambda (if (typep form '(cons (eql function) (cons t null)))
+                    (cadr form)
+                    form)))
+    (if (typep lambda '(cons (member lambda named-lambda)))
+        (values lambda nil)
+        (values `(lambda ()
+                   ;; PROGN so that attempts to eval free declarations
+                   ;; signal errors rather than return NIL.
+                   ,(if (and (consp form) (eq (car form) 'declare))
+                        `(progn ,form)
+                        form))
+                t))))
+
 (defun eval-and-print (form aux-form breakpoints)
   (setf common-lisp-user::- form)
   (let* ((results (multiple-value-list
@@ -583,7 +607,7 @@
                    #+sbcl
                    (handler-bind ((sb-c::compiler-note #'muffle-warning))
                      (let* ((sb-c::*source-paths* (make-hash-table :test 'eq))
-                            (lambda (sb-impl::make-eval-lambda form))
+                            (lambda (make-eval-lambda form))
                             (sb-c::*source-form-context-alist*
                               (acons lambda form
                                      sb-c::*source-form-context-alist*)))
